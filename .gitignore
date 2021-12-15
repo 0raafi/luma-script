@@ -38,3 +38,5 @@ logs/
 *.pid
 
 !.gitkeep
+
+package-lock.json

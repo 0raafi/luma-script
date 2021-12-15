@@ -3,7 +3,7 @@ const path = require('path');
 const glob = require('glob-all')
 const webpack = require('webpack');
 const nodeExternals = require('webpack-node-externals');
-const { BundleAnalyzerPlugin }  = require('webpack-bundle-analyzer');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const AssetsPlugin = require('assets-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -14,11 +14,13 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const LoadablePlugin = require('@loadable/webpack-plugin');
 const WorkboxPlugin = require('workbox-webpack-plugin');
 const StyleLintPlugin = require('stylelint-webpack-plugin');
+const tailwindcss = require('tailwindcss');
+const autoprefixer = require('autoprefixer'); // help tailwindcss to work
 
 const paths = require('../config/paths');
 const progressHandler = require('./utils/progress');
 
-const config = require('config').util.loadFileConfigs(`${paths.appPath  }/config`);
+const config = require('config').util.loadFileConfigs(`${paths.appPath}/config`);
 
 const pkg = require(`${paths.appPath}/package.json`);
 
@@ -27,7 +29,7 @@ const { name, version } = pkg;
 
 const {
   argv,
-  env : {
+  env: {
     NODE_ENV,
     SOURCE_MAP,
     DEV_SERVER,
@@ -59,7 +61,7 @@ console.log(
     isAnalyze,
     config_compiler: config.compiler_public_path,
     tsConfig: path.resolve(paths.appPath, 'tsconfig.json')
-  }).reduce((a, [k, v]) =>  a += `${k}: ${v}\n`, '\n')
+  }).reduce((a, [k, v]) => a += `${k}: ${v}\n`, '\n')
 );
 
 const terserCache = {};
@@ -114,7 +116,7 @@ const webpackConfig = ({ isClient }) => ({
   },
 
   output: {
-    path: `${paths.appBuild  }/public/assets/`,
+    path: `${paths.appBuild}/public/assets/`,
     publicPath: config.compiler_public_path || '/assets/',
     pathinfo: isVerbose
   },
@@ -147,7 +149,7 @@ const webpackConfig = ({ isClient }) => ({
               compact: isProdEnv,
               cacheDirectory: true,
               cacheCompression: false,
-              babelrcRoots: [ paths.appPath ],
+              babelrcRoots: [paths.appPath],
             },
           },
         ],
@@ -298,6 +300,10 @@ const clientConfig = {
                   // this one for using node_modules as a base folder
                   // this one for using sass as the base folder
                 ]
+              },
+              postcssOptions: {
+                ident: 'postcss',
+                plugins: [tailwindcss, autoprefixer]
               }
             },
           },
@@ -343,7 +349,7 @@ const clientConfig = {
         `${paths.appSrc}/**/**/**/*`,
         `${paths.appSrc}/**/**/*`,
         `${paths.appSrc}/**/*`,
-      ],  { nodir: true }),
+      ], { nodir: true }),
     }),
     // Emit a file with assets paths
     // https://github.com/sporto/assets-webpack-plugin#options
@@ -366,7 +372,7 @@ const clientConfig = {
       skipWaiting: true,
       offlineGoogleAnalytics: true,
       importWorkboxFrom: 'local',
-      globDirectory: `${paths.appPath  }/public/`,
+      globDirectory: `${paths.appPath}/public/`,
       globPatterns: ['*.{js,ico,png,html,css}'],
       ignoreUrlParametersMatching: [/./],
       navigateFallback: '/',
@@ -462,7 +468,7 @@ const serverConfig = {
   },
   module: {
     ...baseServerConfig.module,
-    rules:[
+    rules: [
       ...baseServerConfig.module.rules,
       {
         test: /\.(css|scss)$/,
@@ -485,6 +491,10 @@ const serverConfig = {
                   // this one for using node_modules as a base folder
                   // this one for using sass as the base folder
                 ]
+              },
+              postcssOptions: {
+                ident: 'postcss',
+                plugins: [tailwindcss, autoprefixer]
               }
             },
           },
@@ -505,7 +515,7 @@ const serverConfig = {
     new MiniCssExtractPlugin({
       // Options similar to the same options in webpackOptions.output
       // all options are optional
-      insert: () => {},
+      insert: () => { },
       runtime: false
     }),
     // Define free variables
