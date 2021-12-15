@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "jsx": "react",
+    "module": "esnext",
+    "esModuleInterop": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "moduleResolution": "node",
+    "declaration": true,
+    "strict": false,
+    // Ensure that Babel can safely transpile files in the TypeScript project
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
+    "resolveJsonModule": true,
+    "typeRoots" : ["node_modules/@types", "src/types"],
+    "baseUrl": "."
+  },
+  "include": ["./src"],
+  "exclude": ["node_modules", "/__tests__/*", "**/__tests__/*"]
+}

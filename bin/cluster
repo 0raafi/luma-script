@@ -1,0 +1,144 @@
+#!/usr/bin/env node
+// # vi: ft=javascript
+
+const path = require('path');
+const recluster = require('recluster');
+const fs = require('fs');
+const args = require('yargs').argv;
+const http = require('http');
+const paths = require('../config/paths');
+const pkg = require(paths.appPath + '/package.json');
+
+const envPath = path.resolve(paths.appPath, '.env');
+const pidFile = process.env.PIDFILE || path.join(paths.appPath, pkg.name + '.pid');
+
+let flagReload = true;
+
+if (fs.existsSync(envPath)) {
+  require('dotenv').config({path: envPath});
+};
+
+function usage() {
+  console.log(`Usage : ${process.argv[1]} <filename> `);
+  console.log('example : cluster app.js');
+};
+
+function killAll(signal) {
+  console.log(`Received ${signal} signal, signalling all worker processes...`);
+  process.kill(0, signal);
+};
+
+function heartbeat(cluster) {
+  const port = args.p || 0;
+
+  function reloadCluster(msg) {
+    if (flagReload) {
+      flagReload = false;
+      console.log(`reloading cluster instances ${msg}`);
+      cluster.reload();
+
+      setTimeout(() => {
+        flagReload = true;
+      }, 10000);
+    } else {
+      console.log('multiple call reload ');
+    };
+  };
+
+  if (port) {
+    process.env.PORT = port;
+    console.log(`will monitor port ${port} for heartbeat`);
+
+    setTimeout(() => {
+      setInterval(() => {
+        const request = http.get(`http://localhost:${port}`, (res) => {
+          request.setTimeout(0); // disable timeout on response.
+          if ([200, 302].indexOf(res.statusCode) === -1) {
+            reloadCluster(`[heartbeat] : FAIL with code ${res.statusCode}`)
+          } else {
+            console.log(` [heartbeat]:  OK [${res.statusCode}]`)
+          };
+        })
+          .on('error', (err) => {
+            reloadCluster(` [heartbeat]:  FAIL with ${err.message}`);
+          });
+
+        request.setTimeout(10000, () => {
+          // QZ: This is agressive reload on first failure. Later, we may change it
+          // to reload on n consecutive failures
+          reloadCluster(' [heartbeat]: FAIL with timeout ');
+        });
+      }, 10000);
+    }, 20000);
+  }
+}
+
+function startApp(filename) {
+  const opts = { timeout: 30, respawn: 60 };
+
+  try {
+    if (process.env.RECLUSTER_WORKERS) {
+      opts.workers = parseInt(process.env.RECLUSTER_WORKERS, 10);
+    };
+  } catch (e) {
+    // it is ok
+  };
+
+  const cluster = recluster(filename, opts);
+  let sighupSent = false;
+
+  heartbeat(cluster); // this comes first as it may set the port
+  cluster.run();
+
+  process.on('SIGHUP', () => {
+    if (!sighupSent) {
+      sighupSent = true;
+      killAll('SIGHUP');
+      setTimeout(() => {
+        sighupSent = false
+      }, 30000);
+    };
+  });
+
+  process.on('SIGUSR2', () => {
+    console.log('Restart signal received, reloading instances');
+    cluster.reload();
+  });
+
+  process.on('SIGTERM', () => {
+    console.log('TERM signal received, shutting down instances');
+    cluster.terminate();
+    fs.unlink(`${pidFile}`, () => {
+      console.log(`Process ${process.pid} PID File '${pidFile}' removed`);
+    });
+  });
+
+  fs.writeFile(`${pidFile}`, `${process.pid}`, () => {
+    console.log(`Process ${process.pid} PID File '${pidFile}' created`);
+  });
+};
+
+(function main() {
+  const argv = process.argv.slice(2);
+  let filename = argv[0];
+
+  if (argv.length === 0) {
+    usage();
+
+    return;
+  };
+
+  console.log(`starting ${filename}`);
+
+  fs.stat(filename, () => {
+    if (/\.js$/.test(filename) === false) {
+      filename += '.js';
+    }
+
+    if (filename[0] !== '/' && process.platform !== "win32") {
+      filename = `${process.cwd()}/${filename}`;
+    }
+
+    startApp(filename);
+  });
+}());
