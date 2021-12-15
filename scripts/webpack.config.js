@@ -75,34 +75,6 @@ const recursiveIssuer = (m) => {
     return false;
   }
 };
-//
-// //Generate SW Environment Config
-// class GenerateSWEnvPlugin {
-//   // Define `apply` as its prototype method which is supplied with compiler as its argument
-//   apply(compiler) {
-//     // Specify the event hook to attach to
-//     compiler.hooks.beforeRun.tapAsync(
-//       'GenerateSWEnvPlugin',
-//       (__, callback) => {
-//         fs.writeFileSync(`${paths.appPath  }/public/env.js`,
-//           `
-//           var env = {
-//             FIREBASE_SENDER_ID: ${FIREBASE_SENDER_ID}
-//           }
-//           `
-//         );
-//         fs.writeFileSync(`${paths.appBuild  }/public/env.js`,
-//           `
-//           var env = {
-//             FIREBASE_SENDER_ID: ${FIREBASE_SENDER_ID}
-//           }
-//           `
-//         );
-//         callback();
-//       }
-//     );
-//   };
-// };
 
 //
 // Common configuration chunk to be used for both
@@ -188,13 +160,6 @@ const webpackConfig = ({ isClient }) => ({
         configFile: path.resolve(paths.appPath, 'tsconfig.json'),
       }
     }),
-    new StyleLintPlugin({
-      configBasedir: paths.appPath,
-      configFile: `${paths.appPath}/.stylelintrc`,
-      lintDirtyModulesOnly: isRuntimeDev,
-      extensions: ['css', 'scss'],
-      customSyntax: 'postcss-scss'
-    })
   ],
 
   // Don't attempt to continue if there are any errors.
@@ -209,6 +174,28 @@ const styleLoaders = ({ isClient }) => [
       modules: false,
       importLoaders: 2,
       sourceMap: true,
+    },
+  },
+  {
+    loader: 'postcss-loader',
+    options: {
+      sourceMap: true,
+      postcssOptions: {
+        ident: 'postcss',
+        plugins: [tailwindcss, autoprefixer]
+      }
+    },
+  },
+  {
+    loader: 'sass-loader',
+    options: {
+      sourceMap: true,
+      sassOptions: {
+        includePaths: [
+          // this one for using node_modules as a base folder
+          // this one for using sass as the base folder
+        ]
+      }
     },
   },
   'resolve-url-loader'
@@ -284,35 +271,13 @@ const clientConfig = {
         test: /\.(css|scss)$/,
         sideEffects: true,
         use: [
-          isRuntimeDev ? 'style-loader' : {
+          {
             loader: MiniCssExtractPlugin.loader,
             options: {
               esModule: false
             }
           },
-          ...(styleLoaders({ isClient: true })),
-          {
-            loader: 'sass-loader',
-            options: {
-              sourceMap: true,
-              sassOptions: {
-                includePaths: [
-                  // this one for using node_modules as a base folder
-                  // this one for using sass as the base folder
-                ]
-              }
-            },
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              sourceMap: true,
-              postcssOptions: {
-                ident: 'postcss',
-                plugins: [tailwindcss, autoprefixer]
-              }
-            },
-          },
+          ...(styleLoaders({ isClient: true }))
         ],
         include: [
           paths.appSrc,
@@ -487,29 +452,7 @@ const serverConfig = {
               emit: false
             }
           },
-          ...(styleLoaders({ isClient: true })),
-          {
-            loader: 'sass-loader',
-            options: {
-              sourceMap: true,
-              sassOptions: {
-                includePaths: [
-                  // this one for using node_modules as a base folder
-                  // this one for using sass as the base folder
-                ]
-              },
-            },
-          },
-          {
-            loader: 'postcss-loader',
-            options: {
-              sourceMap: true,
-              postcssOptions: {
-                ident: 'postcss',
-                plugins: [tailwindcss, autoprefixer]
-              }
-            },
-          },
+          ...(styleLoaders({ isClient: false }))
         ],
         include: [
           paths.appSrc,
