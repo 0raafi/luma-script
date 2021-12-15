@@ -211,6 +211,7 @@ const styleLoaders = ({ isClient }) => [
       sourceMap: true,
     },
   },
+  'sass-loader',
   'resolve-url-loader'
 ];
 
@@ -292,15 +293,9 @@ const clientConfig = {
           },
           ...(styleLoaders({ isClient: true })),
           {
-            loader: 'sass-loader',
+            loader: 'postcss-loader',
             options: {
               sourceMap: true,
-              sassOptions: {
-                includePaths: [
-                  // this one for using node_modules as a base folder
-                  // this one for using sass as the base folder
-                ]
-              },
               postcssOptions: {
                 ident: 'postcss',
                 plugins: [tailwindcss, autoprefixer]
