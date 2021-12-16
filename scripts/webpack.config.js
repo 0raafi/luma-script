@@ -197,14 +197,15 @@ const styleLoaders = ({ isClient }) => [
         ]
       }
     },
-  },
-  'resolve-url-loader'
+  }
 ];
 
 //
 // Configuration for the client-side bundle (client.tsx)
 // -----------------------------------------------------------------------------
 const baseClientConfig = webpackConfig({ isClient: true });
+console.log('isProdEnv', isProdEnv)
+console.log('isRuntimeDev', isRuntimeDev)
 const clientConfig = {
   ...baseClientConfig,
   name: 'client',
