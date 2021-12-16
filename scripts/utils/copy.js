@@ -8,7 +8,7 @@ const { format } = require('./run');
 const pkg = require(`${appPath}/package.json`);
 
 /**
- * Copies static files such as robots.txt, favicon.ico to the
+ * Copies static files such as robots.txt, favicon.svg to the
  * output (build) folder.
  */
 
