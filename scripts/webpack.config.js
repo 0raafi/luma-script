@@ -13,7 +13,6 @@ const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const LoadablePlugin = require('@loadable/webpack-plugin');
 const WorkboxPlugin = require('workbox-webpack-plugin');
-const StyleLintPlugin = require('stylelint-webpack-plugin');
 const tailwindcss = require('tailwindcss');
 const autoprefixer = require('autoprefixer'); // help tailwindcss to work
 
